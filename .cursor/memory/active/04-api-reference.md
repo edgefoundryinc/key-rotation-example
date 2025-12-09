@@ -1,5 +1,52 @@
 # API Reference
 
+## CLI Tool: `src/cli.js`
+
+### Commands
+
+```bash
+# Create new key
+node src/cli.js create [options]
+  --merchant, -m    Merchant ID (optional)
+  --env, -e         Environment: live|test (default: live)
+  --by              Created by: system|auto-rotation|user (default: user)
+
+# List all keys
+node src/cli.js list
+
+# Read key details
+node src/cli.js read <keyId>
+
+# Deprecate key (start overlap period)
+node src/cli.js deprecate <keyId>
+
+# Destroy key (immediate invalidation)
+node src/cli.js destroy <keyId>
+
+# Rotate key (deprecate old, create new)
+node src/cli.js rotate <keyId>
+
+# Validate plaintext key
+node src/cli.js validate <plaintextKey>
+
+# Clear all keys
+node src/cli.js clear
+
+# Show help
+node src/cli.js help
+```
+
+### npm Scripts
+
+```bash
+npm run cli           # Run CLI
+npm run key:create    # Create new key
+npm run key:list      # List all keys
+npm run key:clear     # Clear store
+```
+
+---
+
 ## Core Module: `src/key-rotator.js` (v2.0)
 
 ### SigningKey Interface
@@ -45,12 +92,12 @@ import {
 ```javascript
 // Create new SigningKey (returns plaintext once!)
 const { signingKey, plaintextKey } = await createSigningKey({
-  prefix: 'sk',              // optional, default 'sk'
-  environment: 'live',       // optional, default 'live'
-  merchantId: 'merchant_x',  // optional, for multi-tenant
-  createdBy: 'system',       // optional, audit trail
-  ttlMs: 2592000000,         // optional, 30 days default
-  overlapMs: 86400000        // optional, 24h default
+  prefix: 'sk',
+  environment: 'live',
+  merchantId: 'merchant_x',
+  createdBy: 'system',
+  ttlMs: 2592000000,
+  overlapMs: 86400000
 });
 
 // Deprecate (start overlap period)
@@ -64,93 +111,23 @@ const { valid, status, reason, remainingMs } = isSigningKeyValid(signingKey);
 
 // Get status
 const status = getSigningKeyStatus(signingKey);
-// => 'active' | 'deprecated' | 'destroyed'
 
 // Check if rotation needed
 const needsIt = needsRotation(signingKey);
-// => true if past TTL
 
 // Rotate (deprecate old, create new)
-const { oldKey, newKey, plaintextKey } = await rotateSigningKey(currentKey, {
-  createdBy: 'auto-rotation'  // optional overrides
-});
+const { oldKey, newKey, plaintextKey } = await rotateSigningKey(currentKey);
 ```
 
 ### Utility Functions
 
 ```javascript
-// Generate key string
-const key = generateKey('sk', 'live');
-// => "sk_live_a1b2c3d4..."
-
-// Generate key ID
-const id = generateKeyId();
-// => "key_abc12345"
-
-// Hash for storage
-const hash = await hashKey(plaintextKey);
-// => "64-char hex SHA-256"
-
-// Validate format
-const { valid, error, parts } = validateKeyFormat(key);
-
-// Format duration
-formatDuration(86400000);  // => "24h"
-
-// Clamp overlap to valid range
-const clamped = clampOverlap(1000);  // => MIN_OVERLAP_MS
-```
-
----
-
-## REST API (Phase 3 - Planned)
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/keys` | POST | Create new SigningKey |
-| `/api/keys` | GET | List all keys |
-| `/api/keys/:keyId` | GET | Get key status |
-| `/api/keys/:keyId/rotate` | POST | Trigger rotation |
-| `/api/keys/:keyId` | DELETE | Destroy key |
-
-### Create Key Request
-```json
-POST /api/keys
-{
-  "prefix": "sk",
-  "environment": "live",
-  "merchantId": "merchant_abc",
-  "ttlMs": 2592000000,
-  "overlapMs": 86400000
-}
-```
-
-### Create Key Response
-```json
-{
-  "keyId": "key_abc12345",
-  "key": "sk_live_xxxxx...",
-  "expiresAt": 1767908963308,
-  "rotationPolicy": {
-    "ttlMs": 2592000000,
-    "overlapMs": 86400000
-  }
-}
-```
-
-### Key Status Response
-```json
-{
-  "keyId": "key_abc12345",
-  "status": "active",
-  "createdAt": 1765316963308,
-  "expiresAt": 1767908963308,
-  "deprecatedAt": null,
-  "destroyedAt": null,
-  "isValid": true,
-  "needsRotation": false,
-  "remainingTtlMs": 2591999000
-}
+generateKey('sk', 'live')     // => "sk_live_a1b2c3d4..."
+generateKeyId()               // => "key_abc12345"
+await hashKey(plaintextKey)   // => "64-char hex SHA-256"
+validateKeyFormat(key)        // => { valid, error, parts }
+formatDuration(86400000)      // => "24h"
+clampOverlap(1000)            // => MIN_OVERLAP_MS
 ```
 
 ---
@@ -158,7 +135,16 @@ POST /api/keys
 ## Test Commands
 
 ```bash
-npm run test:key-rotator   # Core tests (26)
+npm test                   # Core tests (26)
 npm run test:signing-key   # Interface tests (18)
 npm run test:all           # All tests (44)
 ```
+
+---
+
+## Storage
+
+| Environment | Storage |
+|-------------|---------|
+| CLI Testing | `.keys.json` (local file, gitignored) |
+| Production | Cloudflare Durable Object (Phase 2) |

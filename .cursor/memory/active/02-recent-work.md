@@ -1,5 +1,37 @@
 # Recent Work
 
+## 2025-12-09 (Session 2 - Continued)
+**Focus:** CLI Tool for CRUD Testing
+
+### Completed
+- Created `src/cli.js` - full CLI for key management
+- Added `.gitignore` with `.keys.json` (stores plaintext for testing)
+- Updated `package.json` with CLI scripts
+- Verified full CRUD workflow via command line
+
+### CLI Commands
+```bash
+node src/cli.js create [--merchant <id>] [--env <live|test>]
+node src/cli.js list
+node src/cli.js read <keyId>
+node src/cli.js deprecate <keyId>
+node src/cli.js destroy <keyId>
+node src/cli.js rotate <keyId>
+node src/cli.js validate <plaintextKey>
+node src/cli.js clear
+node src/cli.js help
+```
+
+### CRUD Verification
+- ✅ CREATE: `create --merchant acme_corp --env live`
+- ✅ READ: `list` and `read key_xxxxx`
+- ✅ UPDATE: `deprecate key_xxxxx` (status change)
+- ✅ DELETE: `destroy key_xxxxx` (immediate invalidation)
+- ✅ ROTATE: `rotate key_xxxxx` (deprecate old + create new)
+- ✅ VALIDATE: `validate sk_live_xxxxx` (hash lookup)
+
+---
+
 ## 2025-12-09 (Session 2)
 **Focus:** Refactored to Tim Cook's SigningKey Interface
 
@@ -11,7 +43,6 @@
 - Added multi-tenant support (`merchantId`)
 - Added audit trail (`createdBy`: system/auto-rotation/user)
 - Updated test suite: 26 core tests + 18 interface tests = 44 total
-- Renamed constants: `gracePeriodMs` → `overlapMs`, added `ttlMs`
 
 ### Interface Changes
 | Old (v1) | New (v2 - SigningKey) |
@@ -19,18 +50,10 @@
 | `id` | `keyId` |
 | `keyHash` | `hash` |
 | `status` string | `deprecatedAt` + `destroyedAt` timestamps |
-| `rotatedAt` | `deprecatedAt` |
-| `expiresAt` (grace end) | `expiresAt` (TTL) + `overlapMs` |
 | `policy.gracePeriodMs` | `rotationPolicy.overlapMs` |
 | N/A | `rotationPolicy.ttlMs` |
 | N/A | `metadata.merchantId` |
 | N/A | `metadata.createdBy` |
-
-### Key Decision
-Adopted Tim Cook's enterprise-aligned SigningKey interface for:
-- Better audit trail (timestamps vs status)
-- Multi-tenant support (merchantId)
-- Industry alignment (Stripe, AWS, Google patterns)
 
 ---
 
