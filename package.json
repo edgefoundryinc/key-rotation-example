@@ -1,0 +1,21 @@
+{
+  "name": "key-rotator",
+  "version": "1.0.0",
+  "description": "Generic key rotation system for Cloudflare Workers",
+  "type": "module",
+  "main": "src/key-rotator.js",
+  "scripts": {
+    "test": "node src/tests/key-rotator-test.js",
+    "test:key-rotator": "node src/tests/key-rotator-test.js",
+    "test:signing-key": "node src/tests/signing-key-shape-test.js",
+    "test:all": "node src/tests/key-rotator-test.js & node src/tests/signing-key-shape-test.js"
+  },
+  "keywords": [
+    "api-key",
+    "key-rotation",
+    "cloudflare-workers",
+    "authentication"
+  ],
+  "license": "MIT"
+}
+
