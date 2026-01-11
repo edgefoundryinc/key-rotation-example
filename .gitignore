@@ -3,6 +3,7 @@ node_modules/
 
 # Key store (contains plaintext keys for testing)
 .keys.json
+.keys-kv-export.json
 
 # IDE
 .vscode/

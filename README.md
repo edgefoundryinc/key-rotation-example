@@ -1,4 +1,4 @@
-# Key Rotator System
+# Key Rotator System (Deprecated, For Learning Purposes Only, v2 coming soon)
 
 A generic, enterprise-aligned API key rotation system for Cloudflare Workers with zero-downtime support.
 
